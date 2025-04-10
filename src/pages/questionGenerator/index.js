@@ -14,7 +14,8 @@ import {
   Spin,
   Switch,
   Tag,
-  Tooltip
+  Tooltip,
+  message
 } from "antd";
 import {
   QuestionCircleOutlined,
@@ -83,6 +84,13 @@ class questionGenerator extends React.Component {
   // btn handler
   // 自动组卷！
   autoGenerate = async () => {
+    // 检查知识点权重总和是否为100%
+    const totalWeight = this.calculateTotalWeight();
+    if (totalWeight !== 100) {
+      message.error(`知识点权重总和必须为100%，当前为${totalWeight}%`);
+      return;
+    }
+
     await this.setState({ btnLoading: true });
     await this.props.dispatch({ type: "questionGenerator/emptyList" });
     let selectedTopicIds = [];
@@ -105,10 +113,23 @@ class questionGenerator extends React.Component {
       });
     } else if (this.state.geneticSelect === 1) {
       payload["iterationsNum"] = this.state.iterationsNum;
-      await this.props.dispatch({
-        type: "questionGenerator/geneticSelect",
-        payload: payload
-      });
+      try {
+        const response = await this.props.dispatch({
+          type: "questionGenerator/geneticSelect",
+          payload: payload
+        });
+        console.log("Genetic algorithm response:", response);
+        if (response && response.data) {
+          // 确保数据被正确更新到state中
+          await this.props.dispatch({
+            type: "questionGenerator/updateGeneticResults",
+            payload: response.data
+          });
+        }
+      } catch (error) {
+        console.error("Error in genetic algorithm:", error);
+        message.error("遗传算法执行出错，请重试");
+      }
     }
     await this.setState({ btnLoading: false });
   };
@@ -328,6 +349,14 @@ class questionGenerator extends React.Component {
     };
   };
 
+  // 计算知识点权重总和
+  calculateTotalWeight = () => {
+    return this.state.knowledgeWeights.reduce(
+      (sum, item) => sum + item.weight,
+      0
+    );
+  };
+
   // non-jsx render（手动更新非react组件，比如绘制canvas）
 
   // init Data
@@ -349,6 +378,16 @@ class questionGenerator extends React.Component {
   componentDidMount() {
     this.initData().then(null);
   }
+
+  // 更新知识点权重
+  updateKnowledgeWeight = (index, value) => {
+    if (value === null) return;
+
+    const newWeights = [...this.state.knowledgeWeights];
+    newWeights[index].weight = value;
+
+    this.setState({ knowledgeWeights: newWeights });
+  };
 
   render() {
     const renderManualTopic = () => {
@@ -379,7 +418,7 @@ class questionGenerator extends React.Component {
 
       return (
         <div>
-          {this.state.geneticSelect === 1 ? (
+          {this.state.geneticSelect === 1 && variance.length > 0 ? (
             <div>
               <Divider
                 orientation="left"
@@ -387,50 +426,54 @@ class questionGenerator extends React.Component {
               >
                 遗传迭代算法 「自动出题难度」与「预期难度」的方差变化
               </Divider>
-              <code
-                style={{
-                  color: "#666",
-                  fontSize: "0.8em",
-                  paddingRight: "15px"
-                }}
-              >
-                初始方差：{variance.length > 0 ? variance[0] : null}
-              </code>
-              <code
-                style={{
-                  color: "#666",
-                  fontSize: "0.8em",
-                  paddingRight: "15px"
-                }}
-              >
-                方差收敛于：
-                {variance.length > 0 ? variance[variance.length - 1] : null}
-              </code>
-              <code
-                style={{
-                  color: "#666",
-                  fontSize: "0.8em",
-                  paddingRight: "15px"
-                }}
-              >
-                迭代次数：{variance.length}
-              </code>
+              <div style={{ marginBottom: "10px" }}>
+                <code
+                  style={{
+                    color: "#666",
+                    fontSize: "0.8em",
+                    paddingRight: "15px"
+                  }}
+                >
+                  初始方差：{variance[0].toFixed(4)}
+                </code>
+                <code
+                  style={{
+                    color: "#666",
+                    fontSize: "0.8em",
+                    paddingRight: "15px"
+                  }}
+                >
+                  最终方差：{variance[variance.length - 1].toFixed(4)}
+                </code>
+                <code
+                  style={{
+                    color: "#666",
+                    fontSize: "0.8em",
+                    paddingRight: "15px"
+                  }}
+                >
+                  迭代次数：{variance.length}
+                </code>
+              </div>
               <ReactEcharts
                 option={this.getVarianceEchartsOption()}
                 id="variance"
                 style={{
                   width: "100%",
-                  height: variance.length > 0 ? "250px" : "0",
-                  transition: "all 1s"
+                  height: "250px",
+                  transition: "all 1s",
+                  border: "1px solid #f0f0f0",
+                  borderRadius: "4px",
+                  padding: "10px"
                 }}
               />
             </div>
           ) : null}
           <Divider orientation="left" style={{ fontWeight: "bold" }}>
-            填空题，共{TKTList.length}题
+            选择题，共{XZTList.length}题
           </Divider>
-          {TKTList.length > 0
-            ? TKTList.map((item, index) => {
+          {XZTList.length > 0
+            ? XZTList.map((item, index) => {
                 return (
                   <Descriptions span={1} key={index}>
                     <Descriptions.Item>
@@ -441,10 +484,10 @@ class questionGenerator extends React.Component {
               })
             : myEmptyStatus("无数据", "200px")}
           <Divider orientation="left" style={{ fontWeight: "bold" }}>
-            选择题，共{XZTList.length}题
+            填空题，共{TKTList.length}题
           </Divider>
-          {XZTList.length > 0
-            ? XZTList.map((item, index) => {
+          {TKTList.length > 0
+            ? TKTList.map((item, index) => {
                 return (
                   <Descriptions span={1} key={index}>
                     <Descriptions.Item>
@@ -609,9 +652,15 @@ class questionGenerator extends React.Component {
                   const weights = value.map(label => {
                     return {
                       label1: label,
-                      weight: 100 / value.length // 默认平均分配权重
+                      weight: Math.floor(100 / value.length) // 默认平均分配权重，向下取整
                     };
                   });
+                  // 处理余数，将余数加到最后一个权重上
+                  const remainder =
+                    100 - weights.reduce((sum, item) => sum + item.weight, 0);
+                  if (remainder > 0 && weights.length > 0) {
+                    weights[weights.length - 1].weight += remainder;
+                  }
                   this.setState({ knowledgeWeights: weights });
                 } else {
                   this.setState({ knowledgeWeights: [] });
@@ -637,19 +686,61 @@ class questionGenerator extends React.Component {
                       min={0}
                       max={100}
                       value={item.weight}
-                      onChange={value => {
-                        if (value !== null) {
-                          const newWeights = [...this.state.knowledgeWeights];
-                          newWeights[index].weight = value;
-                          this.setState({ knowledgeWeights: newWeights });
-                        }
-                      }}
+                      onChange={value =>
+                        this.updateKnowledgeWeight(index, value)
+                      }
                       className={style.wrapper_params_input}
                       style={{ width: "70px" }}
                     />
                     <span style={{ marginLeft: "5px" }}>%</span>
                   </div>
                 ))}
+                <div
+                  className={style.middle_line_space}
+                  style={{ marginTop: "10px" }}
+                >
+                  <span>权重总和：</span>
+                  <Tag
+                    color={
+                      this.calculateTotalWeight() === 100 ? "green" : "red"
+                    }
+                  >
+                    {this.calculateTotalWeight()}%
+                  </Tag>
+                  {this.calculateTotalWeight() !== 100 && (
+                    <span style={{ marginLeft: "10px", color: "red" }}>
+                      (权重总和必须等于100%)
+                    </span>
+                  )}
+                </div>
+                <div
+                  className={style.middle_line_space}
+                  style={{ marginTop: "10px" }}
+                >
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      const weights = this.state.knowledgeWeights.map(item => {
+                        return {
+                          ...item,
+                          weight: Math.floor(
+                            100 / this.state.knowledgeWeights.length
+                          )
+                        };
+                      });
+                      // 处理余数，将余数加到最后一个权重上
+                      const remainder =
+                        100 -
+                        weights.reduce((sum, item) => sum + item.weight, 0);
+                      if (remainder > 0 && weights.length > 0) {
+                        weights[weights.length - 1].weight += remainder;
+                      }
+                      this.setState({ knowledgeWeights: weights });
+                    }}
+                  >
+                    平均分配权重
+                  </Button>
+                </div>
               </>
             )}
 
