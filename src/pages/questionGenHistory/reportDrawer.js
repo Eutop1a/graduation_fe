@@ -89,11 +89,7 @@ class ReportDrawer extends React.Component {
       if (item.topic_type === "填空题") TKTCount++;
       else if (item.topic_type === "选择题") XZTCount++;
       else if (item.topic_type === "判断题") PDTCount++;
-      else if (
-        item.topic_type === "程序阅读题" ||
-        item.topic_type === "程序设计题"
-      )
-        JDTCount++;
+      else if (item.topic_type === "简答题") JDTCount++;
     });
     return {
       tooltip: {
@@ -118,7 +114,7 @@ class ReportDrawer extends React.Component {
             { value: TKTCount, name: "填空题" },
             { value: XZTCount, name: "判断题" },
             { value: PDTCount, name: "选择题" },
-            { value: JDTCount, name: "程序阅读题/程序设计题" }
+            { value: JDTCount, name: "简答题" }
           ],
           emphasis: {
             itemStyle: {

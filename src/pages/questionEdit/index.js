@@ -13,18 +13,29 @@ import {
   Select,
   Table,
   Tag,
-  Upload
+  Upload,
+  Image,
+  Space
 } from "antd";
 import {
   CheckOutlined,
   FileAddOutlined,
   PieChartOutlined,
-  CloudUploadOutlined
+  CloudUploadOutlined,
+  UploadOutlined,
+  DeleteOutlined
 } from "@ant-design/icons";
 import * as myUtils from "../../utils/myUtils";
 import style from "./index.less";
 import { renderLoading } from "../../layouts/commonComponents";
 import { delay } from "../../utils/myUtils";
+import { message } from "antd";
+import {
+  getAllQuestionLabels,
+  createLabel,
+  updateLabel,
+  deleteLabel
+} from "../../services/requestServices";
 
 class QuestionEdit extends React.Component {
   constructor(props) {
@@ -35,9 +46,16 @@ class QuestionEdit extends React.Component {
       formInitialValues: {
         score: 2
       },
-      // 导入向导对话框是否显示
-      isImportWizardVisible: false
+      isImportWizardVisible: false,
+      error: null,
+      editingLabel: null,
+      modalVisible: false,
+      formMode: "create",
+      imageUrl: null,
+      imageFile: null
     };
+    this._isMounted = false;
+    this.formRef = React.createRef();
   }
 
   // handler
@@ -56,18 +74,50 @@ class QuestionEdit extends React.Component {
     });
   };
 
-  handleSubmit = value => {
-    if (this.state.isInsertMode) {
-      this.props.dispatch({
-        type: "questionEdit/insertSingleQuestionBank",
-        payload: value
+  handleSubmit = async () => {
+    try {
+      const values = await this.formRef.current.validateFields();
+      const formData = new FormData();
+
+      // 添加图片文件
+      if (this.state.imageFile) {
+        formData.append("image", this.state.imageFile);
+        console.log("添加图片到表单:", this.state.imageFile);
+      }
+
+      // 添加JSON数据
+      const questionData = {
+        ...values,
+        id: this.state.isInsertMode
+          ? undefined
+          : this.props.location.query.questionBankId
+      };
+      formData.append("data", JSON.stringify(questionData));
+
+      console.log("提交表单数据:", questionData);
+
+      if (this.state.isInsertMode) {
+        // 创建新题目
+        await createLabel(formData);
+        message.success("创建成功");
+      } else {
+        // 更新题目
+        await updateLabel(this.props.location.query.questionBankId, formData);
+        message.success("更新成功");
+      }
+
+      // 重置表单和图片状态
+      this.setState({
+        imageUrl: null,
+        imageFile: null
       });
-    } else {
-      value.id = this.props.location.query.questionBankId;
-      this.props.dispatch({
-        type: "questionEdit/updateQuestionBankById",
-        payload: value
-      });
+      this.formRef.current.resetFields();
+
+      // 刷新数据
+      this.initData();
+    } catch (error) {
+      console.error("提交失败:", error);
+      message.error(`提交失败: ${error.message || "未知错误"}`);
     }
   };
 
@@ -117,8 +167,55 @@ class QuestionEdit extends React.Component {
 
   // lifeCycle
   componentDidMount() {
+    this._isMounted = true;
     this.initData().then(null);
   }
+
+  componentWillUnmount() {
+    this._isMounted = false;
+  }
+
+  // 处理图片上传
+  handleImageUpload = file => {
+    console.log("处理图片上传:", file);
+
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      message.error("只能上传图片文件！");
+      return false;
+    }
+
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error("图片大小不能超过 2MB！");
+      return false;
+    }
+
+    // 预览图片
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (this._isMounted) {
+        this.setState({
+          imageUrl: e.target.result,
+          imageFile: file
+        });
+        message.success("图片上传成功");
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // 返回 false 阻止默认上传行为
+    return false;
+  };
+
+  // 处理图片删除
+  handleImageDelete = () => {
+    this.setState({
+      imageUrl: null,
+      imageFile: null
+    });
+    message.info("图片已删除");
+  };
 
   render() {
     const renderForm = () => {
@@ -133,6 +230,7 @@ class QuestionEdit extends React.Component {
             labelCol={{ span: 6 }}
             wrapperCol={{ span: 18 }}
             className={style.form}
+            ref={this.formRef}
           >
             <Form.Item
               label="题目内容"
@@ -178,8 +276,7 @@ class QuestionEdit extends React.Component {
                 <Select.Option value="选择题">选择题</Select.Option>
                 <Select.Option value="填空题">填空题</Select.Option>
                 <Select.Option value="判断题">判断题</Select.Option>
-                <Select.Option value="程序阅读题">程序阅读题</Select.Option>
-                <Select.Option value="程序设计题">程序设计题</Select.Option>
+                <Select.Option value="简答题">简答题</Select.Option>
               </Select>
             </Form.Item>
 
@@ -257,6 +354,38 @@ class QuestionEdit extends React.Component {
               </Select>
             </Form.Item>
 
+            <Form.Item label="题目图片">
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Upload
+                  beforeUpload={this.handleImageUpload}
+                  showUploadList={false}
+                  accept="image/*"
+                >
+                  <Button icon={<UploadOutlined />}>
+                    {this.state.imageUrl ? "更换图片" : "上传图片"}
+                  </Button>
+                </Upload>
+                {this.state.imageUrl && (
+                  <div
+                    style={{ position: "relative", display: "inline-block" }}
+                  >
+                    <Image
+                      src={this.state.imageUrl}
+                      alt="题目图片"
+                      style={{ maxWidth: "200px", maxHeight: "200px" }}
+                    />
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={this.handleImageDelete}
+                      style={{ position: "absolute", top: 0, right: 0 }}
+                    />
+                  </div>
+                )}
+              </Space>
+            </Form.Item>
+
             <Form.Item>
               <Button
                 type="primary"
@@ -272,7 +401,7 @@ class QuestionEdit extends React.Component {
     };
 
     return (
-      <div>
+      <div className={style.wrapper}>
         <PageHeader
           title={this.state.isInsertMode ? "添加题目" : "正在修改"}
           subTitle={"支持题库的增删改"}
@@ -290,6 +419,27 @@ class QuestionEdit extends React.Component {
             {...this.props}
           />
         }
+
+        <Modal
+          title={this.state.formMode === "create" ? "创建标签" : "编辑标签"}
+          visible={this.state.modalVisible}
+          onOk={this.handleSubmit}
+          onCancel={() => this.setState({ modalVisible: false })}
+        >
+          <Form
+            ref={this.formRef}
+            layout="vertical"
+            initialValues={this.state.editingLabel}
+          >
+            <Form.Item
+              name="name"
+              label="标签名称"
+              rules={[{ required: true, message: "请输入标签名称" }]}
+            >
+              <Input />
+            </Form.Item>
+          </Form>
+        </Modal>
       </div>
     );
   }

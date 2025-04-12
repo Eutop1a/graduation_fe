@@ -45,12 +45,7 @@ class OverViewModal extends React.Component {
       if (item.topic_type === "填空题") TKTCount++;
       else if (item.topic_type === "选择题") XZTCount++;
       else if (item.topic_type === "判断题") PDTCount++;
-      else if (
-        item.topic_type === "程序设计题" ||
-        item.topic_type === "程序阅读题" ||
-        item.topic_type === "简答题"
-      )
-        JDTCount++;
+      else if (item.topic_type === "简答题") JDTCount++;
     });
     return { totalCount, TKTCount, XZTCount, PDTCount, JDTCount };
   };
@@ -208,12 +203,7 @@ class OverViewModal extends React.Component {
         if (item.topic_type === "填空题") TKTCount++;
         else if (item.topic_type === "选择题") XZTCount++;
         else if (item.topic_type === "判断题") PDTCount++;
-        else if (
-          item.topic_type === "程序设计题" ||
-          item.topic_type === "程序阅读题" ||
-          item.topic_type === "简答题"
-        )
-          JDTCount++;
+        else if (item.topic_type === "简答题") JDTCount++;
       });
       return (
         <div>

@@ -1,6 +1,40 @@
 import { request } from "umi";
 import { API } from "../config/requestConfig";
 import { parseParams } from "../utils/myUtils";
+import axios from "axios";
+import { message } from "antd";
+
+// 创建axios实例
+const requestService = axios.create({
+  baseURL: API,
+  timeout: 10000,
+  withCredentials: true
+});
+
+// 响应拦截器
+requestService.interceptors.response.use(
+  response => {
+    return response.data;
+  },
+  error => {
+    console.error("请求错误:", error);
+    message.error(`请求失败: ${error.message || "未知错误"}`);
+    return Promise.reject(error);
+  }
+);
+
+// 检查响应状态码
+const checkCode = response => {
+  if (response.code === 200) {
+    return response.data;
+  } else {
+    message.error(response.message || "操作失败");
+    return Promise.reject(new Error(response.message || "操作失败"));
+  }
+};
+
+// 导出requestService和checkCode
+export { requestService, checkCode };
 
 // login
 export function login(payload) {
@@ -373,4 +407,40 @@ export const setSimilarityThreshold = threshold => {
     credentials: "include",
     data: { threshold }
   });
+};
+
+// 更新题目（支持图片上传）
+export const updateQuestionWithImage = async (id, formData) => {
+  try {
+    const response = await requestService({
+      url: "/updateQuestionBankById",
+      method: "post",
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+    return checkCode(response);
+  } catch (error) {
+    console.error("更新题目失败:", error);
+    throw error;
+  }
+};
+
+// 创建题目（支持图片上传）
+export const insertQuestionWithImage = async formData => {
+  try {
+    const response = await requestService({
+      url: "/insertSingleQuestionBank",
+      method: "post",
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+    return checkCode(response);
+  } catch (error) {
+    console.error("创建题目失败:", error);
+    throw error;
+  }
 };

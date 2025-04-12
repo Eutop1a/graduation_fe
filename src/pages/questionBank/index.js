@@ -30,10 +30,8 @@ const renderTopicType = text => {
       return <Tag color="volcano">{text}</Tag>;
     case "判断题":
       return <Tag color="purple">{text}</Tag>;
-    case "程序设计题":
+    case "简答题":
       return <Tag color="green">{text}</Tag>;
-    case "程序阅读题":
-      return <Tag color="cyan">{text}</Tag>;
   }
 };
 
@@ -106,12 +104,8 @@ class QuestionBank extends React.Component {
               value: "判断题"
             },
             {
-              text: "程序设计题",
-              value: "程序设计题"
-            },
-            {
-              text: "程序阅读题",
-              value: "程序阅读题"
+              text: "简答题",
+              value: "简答题"
             }
           ],
           filterMultiple: true,
