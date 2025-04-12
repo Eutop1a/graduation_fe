@@ -329,3 +329,38 @@ export function updateQuestionGenHistory(payload) {
     credentials: "include"
   });
 }
+
+// 标签管理相关接口
+export const getLabels = () => {
+  return request(`${API}/labels`, {
+    method: "GET",
+    mode: "cors",
+    credentials: "include"
+  });
+};
+
+export const createLabel = data => {
+  return request(`${API}/labels`, {
+    method: "POST",
+    mode: "cors",
+    credentials: "include",
+    data
+  });
+};
+
+export const updateLabel = (id, data) => {
+  return request(`${API}/labels/${id}`, {
+    method: "PUT",
+    mode: "cors",
+    credentials: "include",
+    data
+  });
+};
+
+export const deleteLabel = id => {
+  return request(`${API}/labels/${id}`, {
+    method: "DELETE",
+    mode: "cors",
+    credentials: "include"
+  });
+};

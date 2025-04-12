@@ -71,6 +71,12 @@ export default defineConfig({
           path: "/questionGenHistory",
           component: "@/pages/questionGenHistory",
           title: "组卷系统-历史记录"
+        },
+        {
+          exact: true,
+          path: "/labelManagement",
+          component: "@/pages/labelManagement",
+          title: "组卷系统-知识点标签管理"
         }
         // {exact: true, path: '/questionManager', component: '@/pages/questionManager', title: "组卷系统"}
       ]

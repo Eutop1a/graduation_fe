@@ -8,7 +8,8 @@ import {
   FileAddOutlined,
   HistoryOutlined,
   UserOutlined,
-  LoginOutlined
+  LoginOutlined,
+  TagsOutlined
 } from "@ant-design/icons";
 
 class TopMenu extends React.Component {
@@ -71,6 +72,11 @@ class TopMenu extends React.Component {
             key: "/questionGenerator",
             icon: <FileAddOutlined />,
             label: "组卷功能"
+          },
+          {
+            key: "/labelManagement",
+            icon: <TagsOutlined />,
+            label: "知识点标签管理"
           },
           {
             key: "/questionGenHistory",
