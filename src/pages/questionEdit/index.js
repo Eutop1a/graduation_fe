@@ -32,9 +32,8 @@ import { delay } from "../../utils/myUtils";
 import { message } from "antd";
 import {
   getAllQuestionLabels,
-  createLabel,
-  updateLabel,
-  deleteLabel
+  insertQuestionWithImage,
+  updateQuestionWithImage
 } from "../../services/requestServices";
 
 class QuestionEdit extends React.Component {
@@ -98,11 +97,14 @@ class QuestionEdit extends React.Component {
 
       if (this.state.isInsertMode) {
         // 创建新题目
-        await createLabel(formData);
+        await insertQuestionWithImage(formData);
         message.success("创建成功");
       } else {
         // 更新题目
-        await updateLabel(this.props.location.query.questionBankId, formData);
+        await updateQuestionWithImage(
+          this.props.location.query.questionBankId,
+          formData
+        );
         message.success("更新成功");
       }
 

@@ -431,7 +431,7 @@ export const updateQuestionWithImage = async (id, formData) => {
 export const insertQuestionWithImage = async formData => {
   try {
     const response = await requestService({
-      url: "/insertSingleQuestionBank",
+      url: "/insertSingleQuestionBankWithImg",
       method: "post",
       data: formData,
       headers: {
