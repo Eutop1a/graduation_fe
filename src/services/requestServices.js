@@ -364,3 +364,13 @@ export const deleteLabel = id => {
     credentials: "include"
   });
 };
+
+// 相似度阈值设置
+export const setSimilarityThreshold = threshold => {
+  return request(`${API}/similarity`, {
+    method: "PUT",
+    mode: "cors",
+    credentials: "include",
+    data: { threshold }
+  });
+};

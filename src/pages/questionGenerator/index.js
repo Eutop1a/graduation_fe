@@ -15,13 +15,19 @@ import {
   Switch,
   Tag,
   Tooltip,
-  message
+  message,
+  Modal,
+  Form
 } from "antd";
 import {
   QuestionCircleOutlined,
   StopOutlined,
   EyeOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SettingOutlined
 } from "@ant-design/icons";
 import style from "./index.less";
 import { myEmptyStatus } from "../../layouts/commonComponents";
@@ -32,6 +38,13 @@ import "echarts/lib/component/title";
 import "echarts/lib/component/legend";
 import "echarts/lib/component/markPoint";
 import ReactEcharts from "echarts-for-react";
+import {
+  getAllQuestionLabels,
+  createLabel,
+  updateLabel,
+  deleteLabel,
+  setSimilarityThreshold
+} from "../../services/requestServices";
 
 class questionGenerator extends React.Component {
   constructor(props) {
@@ -77,8 +90,11 @@ class questionGenerator extends React.Component {
           minCount: 2,
           targetScore: 25
         }
-      }
+      },
+      similarityModalVisible: false,
+      similarityThreshold: 0.8
     };
+    this.similarityFormRef = React.createRef();
   }
 
   // btn handler
@@ -387,6 +403,24 @@ class questionGenerator extends React.Component {
     newWeights[index].weight = value;
 
     this.setState({ knowledgeWeights: newWeights });
+  };
+
+  // 处理相似度阈值设置
+  handleSimilaritySetting = () => {
+    this.setState({ similarityModalVisible: true });
+  };
+
+  handleSimilaritySubmit = async () => {
+    try {
+      const values = await this.similarityFormRef.current.validateFields();
+      console.log("设置相似度阈值:", values.threshold);
+      await setSimilarityThreshold(values.threshold);
+      message.success("相似度阈值设置成功");
+      this.setState({ similarityModalVisible: false });
+    } catch (error) {
+      console.error("设置相似度阈值失败:", error);
+      message.error(`设置失败: ${error.message || "未知错误"}`);
+    }
   };
 
   render() {
@@ -860,7 +894,16 @@ class questionGenerator extends React.Component {
               key="1"
             >
               查看出题历史
-            </Button>
+            </Button>,
+            <Tooltip title="设置题目相似度阈值" key="similarity">
+              <Button
+                type="primary"
+                icon={<SettingOutlined />}
+                onClick={this.handleSimilaritySetting}
+              >
+                相似度设置
+              </Button>
+            </Tooltip>
           ]}
         />
         <div className={style.flex_wrapper}>
@@ -926,6 +969,38 @@ class questionGenerator extends React.Component {
             </Card>
           </div>
         </div>
+
+        {/* 相似度阈值设置模态框 */}
+        <Modal
+          title="设置题目相似度阈值"
+          visible={this.state.similarityModalVisible}
+          onOk={this.handleSimilaritySubmit}
+          onCancel={() => this.setState({ similarityModalVisible: false })}
+        >
+          <Form ref={this.similarityFormRef} layout="vertical">
+            <Form.Item
+              name="threshold"
+              label="相似度阈值"
+              initialValue={0.8}
+              rules={[
+                { required: true, message: "请输入相似度阈值" },
+                {
+                  type: "number",
+                  min: 0,
+                  max: 1,
+                  message: "阈值必须在0到1之间"
+                }
+              ]}
+            >
+              <InputNumber
+                style={{ width: "100%" }}
+                step={0.1}
+                precision={2}
+                placeholder="请输入0-1之间的数值"
+              />
+            </Form.Item>
+          </Form>
+        </Modal>
       </div>
     );
   }
