@@ -373,27 +373,33 @@ class questionGenerator extends React.Component {
     );
   };
 
-  // non-jsx render（手动更新非react组件，比如绘制canvas）
-
   // init Data
   initData = async () => {
     await this.props.dispatch({ type: "questionEdit/getAllQuestionLabels" });
     this.setState({
       chapter1Range: this.props.label1,
-      generateRange: this.props.label1,
-      knowledgeWeights: this.props.label1.map(label => {
-        return {
-          label1: label,
-          weight: 100 / this.props.label1.length // 默认平均分配权重
-        };
-      })
+      generateRange: this.props.label1
     });
+    // 初始化知识点权重
+    this.initKnowledgeWeights();
   };
 
-  // lifeCycle
-  componentDidMount() {
-    this.initData().then(null);
-  }
+  // 初始化知识点权重
+  initKnowledgeWeights = () => {
+    const { label1 } = this.props;
+    if (!label1 || label1.length === 0) return;
+
+    // 计算每个知识点的默认权重，确保总和为100
+    const defaultWeight = Math.floor(100 / label1.length);
+    const remainder = 100 - defaultWeight * label1.length;
+
+    const weights = label1.map((label, index) => ({
+      label1: label,
+      weight: index < remainder ? defaultWeight + 1 : defaultWeight
+    }));
+
+    this.setState({ knowledgeWeights: weights });
+  };
 
   // 更新知识点权重
   updateKnowledgeWeight = (index, value) => {
@@ -404,6 +410,11 @@ class questionGenerator extends React.Component {
 
     this.setState({ knowledgeWeights: newWeights });
   };
+
+  // lifeCycle
+  componentDidMount() {
+    this.initData().then(null);
+  }
 
   // 处理相似度阈值设置
   handleSimilaritySetting = () => {
