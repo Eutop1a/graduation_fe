@@ -17,7 +17,10 @@ import {
   Tooltip,
   message,
   Modal,
-  Form
+  Form,
+  Badge,
+  Empty,
+  Image
 } from "antd";
 import {
   QuestionCircleOutlined,
@@ -444,6 +447,17 @@ class questionGenerator extends React.Component {
               <Descriptions.Item>
                 {index + 1}、(本题{item.score}分) {item.topic}
               </Descriptions.Item>
+              {item.topic_image_path &&
+                item.topic_image_path.startsWith("data:image") && (
+                  <Descriptions.Item>
+                    <Image
+                      src={item.topic_image_path}
+                      alt="题目图片"
+                      style={{ maxWidth: "300px", maxHeight: "200px" }}
+                      preview={true}
+                    />
+                  </Descriptions.Item>
+                )}
             </Descriptions>
           );
         });
@@ -524,6 +538,17 @@ class questionGenerator extends React.Component {
                     <Descriptions.Item>
                       {index + 1}、(本题{item.score}分) {item.topic}
                     </Descriptions.Item>
+                    {item.topic_image_path &&
+                      item.topic_image_path.startsWith("data:image") && (
+                        <Descriptions.Item>
+                          <Image
+                            src={item.topic_image_path}
+                            alt="题目图片"
+                            style={{ maxWidth: "300px", maxHeight: "200px" }}
+                            preview={true}
+                          />
+                        </Descriptions.Item>
+                      )}
                   </Descriptions>
                 );
               })
@@ -538,6 +563,17 @@ class questionGenerator extends React.Component {
                     <Descriptions.Item>
                       {index + 1}、(本题{item.score}分) {item.topic}
                     </Descriptions.Item>
+                    {item.topic_image_path &&
+                      item.topic_image_path.startsWith("data:image") && (
+                        <Descriptions.Item>
+                          <Image
+                            src={item.topic_image_path}
+                            alt="题目图片"
+                            style={{ maxWidth: "300px", maxHeight: "200px" }}
+                            preview={true}
+                          />
+                        </Descriptions.Item>
+                      )}
                   </Descriptions>
                 );
               })
@@ -552,6 +588,17 @@ class questionGenerator extends React.Component {
                     <Descriptions.Item>
                       {index + 1}、(本题{item.score}分) {item.topic}
                     </Descriptions.Item>
+                    {item.topic_image_path &&
+                      item.topic_image_path.startsWith("data:image") && (
+                        <Descriptions.Item>
+                          <Image
+                            src={item.topic_image_path}
+                            alt="题目图片"
+                            style={{ maxWidth: "300px", maxHeight: "200px" }}
+                            preview={true}
+                          />
+                        </Descriptions.Item>
+                      )}
                   </Descriptions>
                 );
               })
@@ -566,6 +613,17 @@ class questionGenerator extends React.Component {
                     <Descriptions.Item>
                       {index + 1}、(本题{item.score}分) {item.topic}
                     </Descriptions.Item>
+                    {item.topic_image_path &&
+                      item.topic_image_path.startsWith("data:image") && (
+                        <Descriptions.Item>
+                          <Image
+                            src={item.topic_image_path}
+                            alt="题目图片"
+                            style={{ maxWidth: "300px", maxHeight: "200px" }}
+                            preview={true}
+                          />
+                        </Descriptions.Item>
+                      )}
                   </Descriptions>
                 );
               })
