@@ -9,7 +9,8 @@ import {
   Popconfirm,
   Select,
   Table,
-  Tag
+  Tag,
+  Image
 } from "antd";
 import Highlighter from "react-highlight-words";
 import {
@@ -51,7 +52,8 @@ class QuestionBank extends React.Component {
         "小章节",
         "操作",
         "难度",
-        "更新时间"
+        "更新时间",
+        "题目图片"
       ],
       visibleColumn: [
         "#",
@@ -65,7 +67,8 @@ class QuestionBank extends React.Component {
         "小章节",
         "操作",
         "难度",
-        "更新时间"
+        "更新时间",
+        "题目图片"
       ],
       defaultColumns: [
         {
@@ -222,6 +225,26 @@ class QuestionBank extends React.Component {
           render: text => moment(text).format("YYYY-MM-DD HH:mm:ss"),
           sorter: (a, b) => a.update_time - b.update_time,
           sortDirections: ["descend", "ascend"]
+        },
+        {
+          title: "题目图片",
+          dataIndex: "topic_image_path",
+          key: "topic_image_path",
+          className: style.column_small_text,
+          width: 120,
+          render: text => {
+            if (text && text.startsWith("data:image")) {
+              return (
+                <Image
+                  src={text}
+                  alt="题目图片"
+                  style={{ maxWidth: "100px", maxHeight: "100px" }}
+                  preview={true}
+                />
+              );
+            }
+            return <span>无图片</span>;
+          }
         }
       ],
       columns: [],
